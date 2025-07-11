@@ -247,3 +247,16 @@ plt.yticks(range(ratio.shape[0]), ratio.index)
 plt.title('Proportion of Current Clients by Career Stage in GTA')
 
 plt.show()
+
+spec_counts = (
+    df[df['FSA'].isin(['N6H', 'N6A', 'N6C', 'N6P', 'N6K'])]
+    .groupby(['FSA','Contact Subtype'])
+    .size()
+    .unstack(fill_value=0)
+)
+
+spec_counts['Total_MDs'] = spec_counts.sum(axis=1)
+
+spec_counts = spec_counts.sort_values('Total_MDs', ascending=False)
+
+print(spec_counts)

@@ -139,7 +139,7 @@ plt.show()
 # On average, Specialists bring more money, so where can we find prospects?
 
 spec_counts = (
-    df[df['FSA'].isin(['M5P','M2N','L9H','M4V','N6H'])]
+    df[df['FSA'].isin(['M5P','M2N','L9H','M4V','N6H', 'K7L'])]
     .groupby(['FSA','Contact Subtype'])
     .size()
     .unstack(fill_value=0)
@@ -213,7 +213,7 @@ plt.colorbar(label='Current / Total (%)')
 plt.xticks(range(ratio.shape[1]), ratio.columns, rotation=45, ha='right')
 plt.yticks(range(ratio.shape[0]), ratio.index)
 
-plt.title('Proportion of Current Clients by Career Stage in GTA')
+plt.title('Proportion of Current Clients by Career Stage in Hamilton')
 
 plt.show()
 
@@ -221,7 +221,7 @@ plt.show()
 
 # For London
 
-df_lon = df[df['FSA'].isin(['N6H', 'N6A', 'N6C', 'N6P', 'N6K'])]
+df_lon = df[df['FSA'].isin(['N6H', 'N6A', 'N6C', 'N6P', 'N6K', 'N6G'])]
 
 combined = df_lon.pivot_table(
     index='Contact Subtype',
@@ -244,12 +244,12 @@ plt.colorbar(label='Current / Total (%)')
 plt.xticks(range(ratio.shape[1]), ratio.columns, rotation=45, ha='right')
 plt.yticks(range(ratio.shape[0]), ratio.index)
 
-plt.title('Proportion of Current Clients by Career Stage in GTA')
+plt.title('Proportion of Current Clients by Career Stage in London')
 
 plt.show()
 
 spec_counts = (
-    df[df['FSA'].isin(['N6H', 'N6A', 'N6C', 'N6P', 'N6K'])]
+    df[df['FSA'].isin(['N6H', 'N6A', 'N6C', 'N6P', 'N6K', 'N6G'])]
     .groupby(['FSA','Contact Subtype'])
     .size()
     .unstack(fill_value=0)
@@ -260,3 +260,47 @@ spec_counts['Total_MDs'] = spec_counts.sum(axis=1)
 spec_counts = spec_counts.sort_values('Total_MDs', ascending=False)
 
 print(spec_counts)
+
+#%%
+
+target_fsas = ['M5P','M2N','M4V', 'M5N', 'M4R', 'M5M', 'M2P', 'N6H', 'N6A', 'N6C', 'N6P', 'N6K', 'N6G']
+target_stages = ['Specialist'] 
+
+df_filtered = df[
+    (df['FSA'].isin(target_fsas)) &
+    (df['Contact Subtype'].isin(target_stages))
+]
+
+df_filtered['age_mid'] = df_filtered['Age Band'].str.extract(r'(\d+)-(\d+)') \
+    .astype(float).mean(axis=1)
+    
+avg_age_by_fsa = (
+    df_filtered
+    .groupby('FSA')['age_mid']
+    .mean()
+    .round(1)
+    .sort_index()
+)
+    
+plt.figure(figsize=(15, 9))
+sns.boxplot(
+    data=df_filtered,
+    x='FSA',
+    y='age_mid',
+    hue='Contact Subtype',
+    palette='Set2'
+)
+
+for i, (fsa, mean_val) in enumerate(avg_age_by_fsa.items()):
+    plt.plot(i, mean_val, 'ro', markersize=8, label='Mean' if i == 0 else "")
+
+for i, fsa in enumerate(avg_age_by_fsa.index):
+    avg = avg_age_by_fsa[fsa]
+    plt.text(i, avg + 0.5, f"Avg: {avg}", color='black', ha='center', fontsize=9)
+
+plt.title("Age Distribution by FSA (Specialists only)")
+plt.ylabel("Age (midpoint)")
+plt.xlabel("FSA")
+plt.legend(title="Career Stage", bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+plt.show()
